@@ -11,14 +11,15 @@ export default function Tasks() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTasks, setTotalTasks] = useState(0);
-  const [sortBy, setSortBy] = useState("dueDate"); // 'dueDate' or 'priority'
-  const [order, setOrder] = useState("asc");       // 'asc' or 'desc'
+  const [sortBy, setSortBy] = useState("dueDate"); 
+  const [order, setOrder] = useState("asc");       
 
   // Filter State
   const [filters, setFilters] = useState({
     keyword: "",
     status: "",
     priority: "",
+    category: "", // <--- 1. Add category to state
   });
 
   // Load Data
@@ -33,7 +34,6 @@ export default function Tasks() {
         ...filters
       });
 
-      // Remove empty filters
       for (const [key, value] of params.entries()) {
         if (!value) params.delete(key);
       }
@@ -54,7 +54,6 @@ export default function Tasks() {
     loadTasks();
   }, [page, filters, sortBy, order]);
 
-  // Handle Input Changes
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
     setPage(1); 
@@ -64,16 +63,16 @@ export default function Tasks() {
     const value = e.target.value;
     if (value === "priority_desc") {
       setSortBy("priority");
-      setOrder("desc"); // High to Low
+      setOrder("desc");
     } else if (value === "priority_asc") {
       setSortBy("priority");
-      setOrder("asc"); // Low to High
+      setOrder("asc");
     } else if (value === "date_asc") {
       setSortBy("dueDate");
-      setOrder("asc"); // Earliest first
+      setOrder("asc");
     } else if (value === "date_desc") {
       setSortBy("dueDate");
-      setOrder("desc"); // Latest first
+      setOrder("desc");
     }
     setPage(1);
   };
@@ -104,7 +103,7 @@ export default function Tasks() {
       </div>
 
       {/* 🔍 FILTERS & SORTING */}
-      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-5 gap-4"> {/* Increased columns to 5 */}
         
         {/* Search */}
         <input
@@ -131,12 +130,20 @@ export default function Tasks() {
           <option value="low">Low</option>
         </select>
 
+        {/* Category Filter (NEW) */}
+        <select name="category" className="border p-2 rounded" onChange={handleFilterChange}>
+          <option value="">All Categories</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Other">Other</option>
+        </select>
+
         {/* SORTING Dropdown */}
         <select className="border p-2 rounded bg-gray-100" onChange={handleSortChange}>
-          <option value="date_asc">Due Date: Earliest First</option>
-          <option value="date_desc">Due Date: Latest First</option>
-          <option value="priority_desc">Priority: High to Low</option>
-          <option value="priority_asc">Priority: Low to High</option>
+          <option value="date_asc"> Earliest First</option>
+          <option value="date_desc"> Latest First</option>
+          <option value="priority_desc">High to Low</option>
+          <option value="priority_asc">Low to High</option>
         </select>
       </div>
 
@@ -174,7 +181,6 @@ export default function Tasks() {
           ))}
         </div>
       )}
-
       
       {totalTasks > 10 && (
         <Pagination page={page} totalPages={totalPages} setPage={setPage} />

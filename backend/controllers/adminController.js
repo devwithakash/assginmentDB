@@ -2,7 +2,7 @@ const User = require("../models/User");
 const Expense = require("../models/Expense");
 const Task = require("../models/Task");
 
-/* 📊 OPTIONAL DASHBOARD COUNT */
+/* 📊 DASHBOARD COUNT */
 exports.getDashboard = async (req, res) => {
   const users = await User.countDocuments();
   const expenses = await Expense.countDocuments();
@@ -11,18 +11,27 @@ exports.getDashboard = async (req, res) => {
   res.json({ users, expenses, tasks });
 };
 
-/* ALL USERS */
+/* ALL USERS + SEARCH */
 exports.getUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, keyword } = req.query; // <--- 1. Get keyword
     const skip = (page - 1) * limit;
 
-    const users = await User.find()
-      .select("-password") // Don't send passwords!
+    // 2. Build Filter
+    const filter = {};
+    if (keyword) {
+      filter.$or = [
+        { name: { $regex: keyword, $options: "i" } },
+        { email: { $regex: keyword, $options: "i" } }
+      ];
+    }
+
+    const users = await User.find(filter)
+      .select("-password")
       .skip(skip)
       .limit(parseInt(limit));
 
-    const total = await User.countDocuments();
+    const total = await User.countDocuments(filter); // <--- Count filtered docs
 
     res.json({
       users,
@@ -35,19 +44,24 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-/* 💰 USER EXPENSES (POPULATED) */
+/* 💰 ALL EXPENSES + SEARCH */
 exports.getExpenses = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, keyword } = req.query;
     const skip = (page - 1) * limit;
 
-    const expenses = await Expense.find()
+    const filter = {};
+    if (keyword) {
+      filter.title = { $regex: keyword, $options: "i" }; // Search by title
+    }
+
+    const expenses = await Expense.find(filter)
       .populate("user", "name email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
-    const total = await Expense.countDocuments();
+    const total = await Expense.countDocuments(filter);
 
     res.json({
       expenses,
@@ -59,19 +73,25 @@ exports.getExpenses = async (req, res) => {
     res.status(500).json({ msg: err.message });
   }
 };
-/*  USER TASKS (POPULATED) */
+
+/* 📋 ALL TASKS + SEARCH */
 exports.getTasks = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, keyword } = req.query;
     const skip = (page - 1) * limit;
 
-    const tasks = await Task.find()
+    const filter = {};
+    if (keyword) {
+      filter.title = { $regex: keyword, $options: "i" }; // Search by title
+    }
+
+    const tasks = await Task.find(filter)
       .populate("user", "name email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
-    const total = await Task.countDocuments();
+    const total = await Task.countDocuments(filter);
 
     res.json({
       tasks,

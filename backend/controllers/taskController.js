@@ -20,6 +20,7 @@ exports.getTasks = async (req, res) => {
     const { 
       status, 
       priority, 
+      category, 
       keyword, 
       startDate,   
       endDate,
@@ -29,13 +30,14 @@ exports.getTasks = async (req, res) => {
       limit = 10 
     } = req.query;
 
-    const filter = { user: req.user.id };
+    const filter = { user: new mongoose.Types.ObjectId(req.user.id) };
 
-    // 1. Exact Filters
+    // 2. Add Category to Exact Filters
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
+    if (category) filter.category = category;
     
-    // 2. Keyword Search
+    // ... keyword search logic ...
     if (keyword) {
       filter.$or = [
         { title: { $regex: keyword, $options: "i" } },
@@ -43,23 +45,36 @@ exports.getTasks = async (req, res) => {
       ];
     }
 
-    // 3. Date Range Filter
+    // ... date range logic ...
     if (startDate || endDate) {
       filter.dueDate = {};
       if (startDate) filter.dueDate.$gte = new Date(startDate);
       if (endDate) filter.dueDate.$lte = new Date(endDate);
     }
 
-    // 4. Sorting Logic (Dynamic)
+    // ... sorting and pagination logic (keep existing code) ...
     const sortOptions = {};
     sortOptions[sortBy] = order === "desc" ? -1 : 1;
-
-    // 5. Query
+    // console.log(filter);
+    
     const tasks = await Task.find(filter)
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
+
+    //   const filter1 = {
+    //   user: new mongoose.Types.ObjectId(req.user.id),
+    //   // category: "Work",
+    // };
+
+    // const tasks1 = await Task.find(filter1);
+    // console.log("taksssssssssssss",tasks1);
+
+
+    
+    
+    
     const total = await Task.countDocuments(filter);
 
     res.json({ 
@@ -72,7 +87,6 @@ exports.getTasks = async (req, res) => {
     res.status(500).json({ msg: err.message });
   }
 };
-
 // DETAIL
 exports.getTaskById = async (req, res) => {
   const task = await Task.findOne({

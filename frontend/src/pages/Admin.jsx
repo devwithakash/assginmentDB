@@ -4,31 +4,29 @@ import Pagination from "../components/Pagination";
 
 export default function Admin() {
   const [stats, setStats] = useState({ users: 0, expenses: 0, tasks: 0 });
-  const [activeTab, setActiveTab] = useState("users"); // 'users', 'expenses', 'tasks'
+  const [activeTab, setActiveTab] = useState("users");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Pagination State
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [keyword, setKeyword] = useState(""); // <--- New State
 
-  // 1. Load Stats on Mount
+  // 1. Load Stats
   useEffect(() => {
     API.get("/admin/dashboard")
       .then((res) => setStats(res.data))
       .catch((err) => console.error("Admin stats error:", err));
   }, []);
 
-  // 2. Load Tab Data when Tab or Page changes
+  // 2. Load Data (now depends on keyword)
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Dynamic endpoint based on active tab
-        const res = await API.get(`/admin/${activeTab}?page=${page}&limit=10`);
-        
-        // Backend returns: { users: [...], total, totalPages } (key matches tab name)
-        setData(res.data[activeTab]); 
+        // Pass keyword to API
+        const res = await API.get(`/admin/${activeTab}?page=${page}&limit=10&keyword=${keyword}`);
+        setData(res.data[activeTab]);
         setTotalPages(res.data.totalPages);
       } catch (err) {
         console.error("Load data error:", err);
@@ -37,13 +35,18 @@ export default function Admin() {
       }
     };
 
-    loadData();
-  }, [activeTab, page]);
+    // Debounce search (optional but good practice) or just load on effect
+    const timeout = setTimeout(() => {
+      loadData();
+    }, 500);
 
-  // Reset page when switching tabs
+    return () => clearTimeout(timeout);
+  }, [activeTab, page, keyword]); // Reload when these change
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setPage(1);
+    setKeyword(""); // Clear search when switching tabs
     setData([]);
   };
 
@@ -51,7 +54,7 @@ export default function Admin() {
     <div className="p-6 min-h-screen bg-gray-50">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Admin Portal</h1>
 
-      {/* 📊 STATS CARDS */}
+      {/* STATS CARDS (No changes here) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded shadow border-l-4 border-blue-500">
           <h3 className="text-gray-500 text-sm font-semibold">TOTAL USERS</h3>
@@ -67,24 +70,37 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* 📑 TABS */}
-      <div className="flex space-x-4 border-b mb-6">
-        {["users", "expenses", "tasks"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`pb-2 px-4 capitalize font-medium transition ${
-              activeTab === tab
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-blue-500"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* TABS + SEARCH BAR */}
+      <div className="flex flex-col md:flex-row justify-between items-center border-b mb-6 gap-4">
+        <div className="flex space-x-4">
+          {["users", "expenses", "tasks"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`pb-2 px-4 capitalize font-medium transition ${
+                activeTab === tab
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500 hover:text-blue-500"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* SEARCH INPUT */}
+        <input 
+          placeholder={`Search ${activeTab}...`}
+          className="border p-2 rounded w-full md:w-64 mb-2 md:mb-0"
+          value={keyword}
+          onChange={(e) => {
+            setKeyword(e.target.value);
+            setPage(1); // Reset to page 1 on search
+          }}
+        />
       </div>
 
-      {/* 📋 DATA LIST */}
+      {/* DATA LIST (Rest of the component remains the same) */}
       <div className="bg-white rounded shadow overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading data...</div>
@@ -92,7 +108,6 @@ export default function Admin() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-100 border-b">
               <tr>
-                {/* Dynamic Headers based on Tab */}
                 {activeTab === "users" && (
                   <>
                     <th className="p-4">Name</th>
@@ -159,7 +174,6 @@ export default function Admin() {
         )}
       </div>
 
-      {/* 📄 PAGINATION */}
       {totalPages > 1 && (
         <Pagination page={page} totalPages={totalPages} setPage={setPage} />
       )}

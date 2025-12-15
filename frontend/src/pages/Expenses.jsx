@@ -12,6 +12,10 @@ export default function Expenses() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalExpenses, setTotalExpenses] = useState(0);
 
+  // Sorting State (New)
+  const [sortBy, setSortBy] = useState("date");
+  const [order, setOrder] = useState("desc");
+
   // Filter State
   const [filters, setFilters] = useState({
     keyword: "",
@@ -32,7 +36,9 @@ export default function Expenses() {
       const params = new URLSearchParams({
         page,
         limit: 10,
-        ...filters // Spread all filters into query params
+        sortBy, // <--- Send sort param
+        order,  // <--- Send order param
+        ...filters 
       });
 
       // Remove empty filters
@@ -52,22 +58,41 @@ export default function Expenses() {
     }
   };
 
-  // Trigger load on Page or Filter change
+  // Trigger load on Page, Filter, or Sort change
   useEffect(() => {
     loadExpenses();
-  }, [page, filters]); // Reload when these change
+  }, [page, filters, sortBy, order]); 
 
   // Handle Input Change
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
-    setPage(1); // Reset to page 1 on filter change
+    setPage(1); 
+  };
+
+  // Handle Sort Change (New)
+  const handleSortChange = (e) => {
+    const value = e.target.value;
+    if (value === "date_desc") {
+      setSortBy("date");
+      setOrder("desc");
+    } else if (value === "date_asc") {
+      setSortBy("date");
+      setOrder("asc");
+    } else if (value === "amount_desc") {
+      setSortBy("amount");
+      setOrder("desc");
+    } else if (value === "amount_asc") {
+      setSortBy("amount");
+      setOrder("asc");
+    }
+    setPage(1);
   };
 
   const remove = async (id) => {
     if(!window.confirm("Are you sure?")) return;
     try {
       await API.delete(`/expenses/${id}`);
-      loadExpenses(); // Reload list
+      loadExpenses(); 
     } catch (err) {
       console.error(err);
     }
@@ -83,12 +108,13 @@ export default function Expenses() {
       </div>
 
       {/* 🔍 FILTERS SECTION */}
-      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Changed grid-cols-4 to grid-cols-5 to fit the sort dropdown */}
+      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
         
         {/* Search */}
         <input
           name="keyword"
-          placeholder="Search title/desc..."
+          placeholder="Search..."
           className="border p-2 rounded"
           value={filters.keyword}
           onChange={handleFilterChange}
@@ -119,7 +145,15 @@ export default function Expenses() {
           <option value="UPI">UPI</option>
         </select>
 
-        {/* Date Range */}
+        {/* SORTING Dropdown (New) */}
+        <select className="border p-2 rounded bg-gray-100 font-medium" onChange={handleSortChange}>
+          <option value="date_desc">Date: Newest First</option>
+          <option value="date_asc">Date: Oldest First</option>
+          <option value="amount_desc">Amount: High to Low</option>
+          <option value="amount_asc">Amount: Low to High</option>
+        </select>
+
+        {/* Date Range (New Row) */}
         <input type="date" name="startDate" className="border p-2 rounded" onChange={handleFilterChange} />
         <input type="date" name="endDate" className="border p-2 rounded" onChange={handleFilterChange} />
 
@@ -140,7 +174,7 @@ export default function Expenses() {
               <div>
                 <h3 className="font-bold text-lg text-gray-800">{exp.title}</h3>
                 <p className="text-sm text-gray-500">
-                  {new Date(exp.date).toLocaleDateString()} • {exp.category} • {exp.paymentMethod}
+                  {new Date(exp.date).toLocaleDateString()} • {exp.category === 'Other' ? exp.categoryOther : exp.category} • {exp.paymentMethod}
                 </p>
                 {exp.description && <p className="text-xs text-gray-400 mt-1">{exp.description}</p>}
               </div>

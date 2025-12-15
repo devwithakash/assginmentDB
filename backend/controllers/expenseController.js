@@ -23,13 +23,15 @@ exports.getExpenses = async (req, res) => {
       startDate, 
       endDate, 
       minAmount,     
-      maxAmount      
+      maxAmount,
+      sortBy = "date", // <--- Default sort field
+      order = "desc"   // <--- Default order (newest first)
     } = req.query;
 
     const skip = (page - 1) * limit;
     const filter = { user: req.user.id };
 
-    // 1. Keyword Search (Title or Description)
+    // 1. Keyword Search
     if (keyword) {
       filter.$or = [
         { title: { $regex: keyword, $options: "i" } },
@@ -45,7 +47,7 @@ exports.getExpenses = async (req, res) => {
     // 3. Date Range
     if (startDate || endDate) {
       filter.date = {};
-      if (startDate) filter.date.$gte = new Date(startDate); // Fixed typo $jhte -> $gte
+      if (startDate) filter.date.$gte = new Date(startDate);
       if (endDate) filter.date.$lte = new Date(endDate);
     }
 
@@ -56,8 +58,12 @@ exports.getExpenses = async (req, res) => {
       if (maxAmount) filter.amount.$lte = Number(maxAmount);
     }
 
+    // 5. Dynamic Sorting Logic
+    const sortOptions = {};
+    sortOptions[sortBy] = order === "desc" ? -1 : 1;
+
     const expenses = await Expense.find(filter)
-      .sort({ date: -1 }) // Sort by newest first
+      .sort(sortOptions) // <--- Apply dynamic sort here
       .skip(skip)
       .limit(parseInt(limit));
 
