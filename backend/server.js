@@ -8,10 +8,9 @@ connectDB().then(()=>{
   const app = express();
   
   app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true
-  }));
-  app.use(express.json());
+  origin: process.env.FRONTEND_URL || "http://localhost:5173", 
+  credentials: true
+}));
   
   app.use("/api/auth", require("./routes/authRoutes"));
   app.use("/api/expenses", require("./routes/expenseRoutes"));
