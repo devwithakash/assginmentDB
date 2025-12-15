@@ -21,6 +21,7 @@ const generateTokens = (user) => {
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    
     // Check if user exists
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ msg: "User already exists" });
@@ -30,6 +31,8 @@ exports.register = async (req, res) => {
     
     res.status(201).json({ msg: "User registered successfully" });
   } catch (err) {
+    // console.log(err);
+    
     res.status(500).json({ msg: err.message });
   }
 };

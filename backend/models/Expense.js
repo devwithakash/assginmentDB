@@ -17,10 +17,20 @@ const expenseSchema = new mongoose.Schema(
       required: true,
     },
 
+    categoryOther: {
+      type: String,
+      // Only require this if category is set to 'Other'
+      required: function() { return this.category === 'Other'; }
+    },
+
     paymentMethod: {
       type: String,
-      enum: ["Cash", "Card", "UPI", "Bank Transfer"],
+      enum: ["Cash", "Card", "UPI", "Bank Transfer","Other"],
       required: true,
+    },
+    paymentMethodOther: {
+        type: String,
+         required: function() { return this.paymentMethod === 'Other'; }
     },
 
     date: { type: Date, required: true },

@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import API from "../api/axios";
+import API from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { DashboardRefreshContext } from "./Dashboard";
 
@@ -27,9 +27,8 @@ export default function AddExpense() {
     // If "Other" selected, use other input value
     const payload = {
       ...expense,
-      category: expense.category === "Other" ? expense.categoryOther : expense.category,
-      paymentMethod:
-        expense.paymentMethod === "Other" ? expense.paymentMethodOther : expense.paymentMethod,
+      categoryOther: expense.category === "Other" ? expense.categoryOther : undefined,
+      paymentMethodOther: expense.paymentMethod === "Other" ? expense.paymentMethodOther : undefined,
     };
     await API.post("/expenses", payload);
     refresh(); // Refresh dashboard

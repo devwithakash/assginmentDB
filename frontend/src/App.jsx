@@ -10,27 +10,41 @@ import AddTask from "./pages/AddTask";
 import TaskDetail from "./pages/TaskDetail";
 import Admin from "./pages/Admin";
 import PrivateRoute from "./components/PrivateRoute";
+import Layout from "./components/Layout"; // 🆕 Import Layout
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/expenses" element={<PrivateRoute><Expenses /></PrivateRoute>} />
-        <Route path="/expenses/add" element={<PrivateRoute><AddExpense /></PrivateRoute>} />
-        <Route path="/expenses/:id" element={<PrivateRoute><ExpenseDetail /></PrivateRoute>} />
-        <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
-        <Route path="/tasks/add" element={<PrivateRoute><AddTask /></PrivateRoute>} />
-        <Route path="/tasks/:id" element={<PrivateRoute><TaskDetail /></PrivateRoute>} />
+        {/* 🔐 PROTECTED ROUTES (Wrapped in Layout) */}
+        <Route element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+        }>
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/expenses/add" element={<AddExpense />} />
+          <Route path="/expenses/:id" element={<ExpenseDetail />} />
+          
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/tasks/add" element={<AddTask />} />
+          <Route path="/tasks/:id" element={<TaskDetail />} />
 
-        {/* Admin Route */}
-        <Route path="/admin" element={<PrivateRoute adminOnly={true}><Admin /></PrivateRoute>} />
+          {/* Admin Route (Still has extra check inside PrivateRoute) */}
+          <Route path="/admin" element={
+            <PrivateRoute adminOnly={true}>
+              <Admin />
+            </PrivateRoute>
+          } />
+        </Route>
 
-        {/* Default */}
+        {/* Default Redirect */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

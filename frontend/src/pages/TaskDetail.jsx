@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../api/axios";
+import API from "../api/api";
 
 export default function TaskDetail() {
   const { id } = useParams();

@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import API from "../api/axios";
+import API from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { DashboardRefreshContext } from "./Dashboard";
 

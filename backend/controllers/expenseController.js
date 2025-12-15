@@ -1,6 +1,6 @@
 // controllers/expenseController.js
 const Expense = require("../models/Expense");
-
+const mongoose = require("mongoose");
 // CREATE
 exports.addExpense = async (req, res) => {
   const expense = await Expense.create({
@@ -104,31 +104,46 @@ exports.deleteExpense = async (req, res) => {
 
 // SUMMARY
 exports.getExpenseSummary = async (req, res) => {
-  const data = await Expense.aggregate([
-    { $match: { user: req.user._id } },
-    { $group: { _id: "$type", total: { $sum: "$amount" } } },
-  ]);
+  try {
+    // 1. Convert string ID to ObjectId
+    const userId = new mongoose.Types.ObjectId(req.user.id); 
 
-  let income = 0,
-    expense = 0;
-  data.forEach((d) =>
-    d._id === "income" ? (income = d.total) : (expense = d.total)
-  );
+    const data = await Expense.aggregate([
+      { $match: { user: userId } }, // 👈 Use 'userId' variable
+      { $group: { _id: "$type", total: { $sum: "$amount" } } },
+    ]);
 
-  res.json({
-    totalIncome: income,
-    totalExpense: expense,
-    netBalance: income - expense,
-  });
+    let income = 0, expense = 0;
+    data.forEach(d => {
+      if (d._id === "income") income = d.total;
+      if (d._id === "expense") expense = d.total;
+    });
+
+    res.json({
+      totalIncome: income,
+      totalExpense: expense,
+      netBalance: income - expense,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
 };
 
 exports.getCategorySummary = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
+    const l = await Expense.find({
+      category: "Other",
+      user: userId,
+    });
+    console.log(l);
+    
     const data = await Expense.aggregate([
       { $match: { user: userId, type: "expense" } },
       { $group: { _id: "$category", total: { $sum: "$amount" } } },
     ]);
+    console.log(data);
+    
     res.json(data);
   } catch (err) {
     res.status(500).json({ msg: err.message });

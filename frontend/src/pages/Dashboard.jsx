@@ -146,7 +146,7 @@
 
 
 import { useEffect, useState, createContext } from "react";
-import API from "../api/axios";
+import API from "../api/api";
 import { Pie, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -194,6 +194,8 @@ export default function Dashboard() {
       setExpenseCat(categoryRes.data || []);
 
       const statusRes = await API.get("/tasks/summary/status");
+      // console.log(statusRes.data[0]);
+      
       setTaskStatus(
         Array.isArray(statusRes.data)
           ? statusRes.data
@@ -291,6 +293,13 @@ export default function Dashboard() {
                     ],
                   },
                 ],
+              }}
+              options={{
+                plugins: {
+                  legend: {
+                    display: false, // <--- This hides the legend completely
+                  },
+                },
               }}
             />
           </div>
